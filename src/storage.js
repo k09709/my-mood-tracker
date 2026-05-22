@@ -1,11 +1,13 @@
-import { collection, query, where, getDocs, addDoc, deleteDoc, doc, updateDoc, orderBy } from 'firebase/firestore';
+import { collection, query, where, getDocs, addDoc, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { db } from './firebase';
 
 export const getEntries = async (userId) => {
   try {
-    const q = query(collection(db, "moods"), where("userId", "==", userId), orderBy("timestamp", "desc"));
+    const q = query(collection(db, "moods"), where("userId", "==", userId));
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const entries = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    // Sort by timestamp descending (newest first) client-side to avoid needing a composite index
+    return entries.sort((a, b) => b.timestamp - a.timestamp);
   } catch (error) {
     console.error("Error fetching entries", error);
     return [];
